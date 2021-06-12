@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:roll_master/HomePage/HomePageUser.dart';
 import 'package:roll_master/Registration/register_user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key}) : super(key: key);
@@ -44,55 +45,98 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Login"),
-        ),
-        body: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: SingleChildScrollView(
-                child: Form(
-                  key: _loginFormKey,
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                        decoration: InputDecoration(
-                            labelText: 'Email*', hintText: "john.doe@gmail.com"),
-                        controller: emailInputController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: emailValidator,
-                      ),
-                      TextFormField(
-                        decoration: InputDecoration(
-                            labelText: 'Password*', hintText: "********"),
-                        controller: pwdInputController,
-                        obscureText: true,
-                        validator: pwdValidator,
-                      ),
-                      RaisedButton(
-                        child: Text("Login"),
-                        color: Theme.of(context).primaryColor,
-                        textColor: Colors.white,
-                        onPressed: () {
-                          if (_loginFormKey.currentState.validate()) {
-                            FirebaseAuth.instance
-                                .signInWithEmailAndPassword(
-                                email: emailInputController.text,
-                                password: pwdInputController.text)
-                                .then((currentUser) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePageUser(id: currentUser.user.uid,))))
-                                .catchError((err) => print(err));
-                          }
-                        },
-                      ),
-                      Text("Don't have an account yet?"),
-                      FlatButton(
-                        child: Text("Register here!"),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterUser()));
-                        },
-                      )
-                    ],
-                  ),
-                ))));
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Color(0xffb2d9ea),
+          body: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              child: SingleChildScrollView(
+                  child: Form(
+                    key: _loginFormKey,
+                    child: Column(
+                      children: <Widget>[
+                        Text("LOGIN", style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),),
+                        SizedBox(height: 36,),
+                        Container(
+                          color: Colors.white,
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 6),
+                                border: InputBorder.none,
+                                labelStyle: TextStyle(color: Colors.black),
+                                labelText: 'Email*', hintText: "john.doe@gmail.com"),
+                            controller: emailInputController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: emailValidator,
+                          ),
+                        ),
+                        SizedBox(height: 16,),
+                        Container(
+                          color: Colors.white,
+                          child: TextFormField(
+                            decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 6),
+                                border: InputBorder.none,
+                                labelStyle: TextStyle(color: Colors.black),
+                                labelText: 'Password*', hintText: "********"),
+                            controller: pwdInputController,
+                            obscureText: true,
+                            validator: pwdValidator,
+                          ),
+                        ),
+                        SizedBox(height: 16,),
+
+                        Center(
+                          child: GestureDetector(
+                            onTap: () async {
+                              if (_loginFormKey.currentState.validate()) {
+                                UserCredential result = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailInputController.text, password: pwdInputController.text);
+                                if(result.user != null) {
+                                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                                  prefs.setString("id", result.user.uid);
+                                  Navigator.pushReplacement(context, PageRouteBuilder(
+                                    settings: RouteSettings(name: '/home_page'),
+                                    pageBuilder: (c, a1, a2) => HomePageUser(
+                                      id: result.user.uid,
+                                    ),
+                                    transitionsBuilder: (c, anim, a2, child) =>
+                                        FadeTransition(opacity: anim, child: child),
+                                    transitionDuration: Duration(milliseconds: 500),
+                                  ),);
+                                } else {
+
+                                }
+                              }
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6)
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text("LOGIN", style: TextStyle(color: Colors.black, fontSize: 18),),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16,),
+                        Text("Don't have an account yet?"),
+                        SizedBox(height: 16,),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RegisterUser()));
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6)
+                            ),
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text("Register Here", style: TextStyle(color: Colors.black, fontSize: 18),),
+                          ),
+                        )
+                      ],
+                    ),
+                  )))),
+    );
   }
 }

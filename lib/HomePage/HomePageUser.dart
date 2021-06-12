@@ -1,8 +1,12 @@
 import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:roll_master/HomePage/Provider/home_page_provider.dart';
+import 'package:roll_master/Login/login_user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePageUser extends StatefulWidget {
   var id;
@@ -12,33 +16,266 @@ class HomePageUser extends StatefulWidget {
   _HomePageUserState createState() => _HomePageUserState();
 }
 
-class _HomePageUserState extends State<HomePageUser> {
+class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver {
 
   CollectionReference reference = FirebaseFirestore.instance.collection("newUsers");
-  List<String> test = ["1", "2", "3", "4", "5", "6"];
+
+  List<String> options = ["Profile", "Logout"];
+  SharedPreferences prefs;
+  HomePageProvider homePageProvider;
 
   @override
   void initState() {
     super.initState();
-    //getData();
+    homePageProvider = Provider.of<HomePageProvider>(context, listen: false);
+    WidgetsBinding.instance.addObserver(this);
+    initializePrefs();
   }
 
-  getData() async {
-    var data = await reference.doc("${widget.id}").get();
-    print(data);
+  initializePrefs() async {
+    prefs = await SharedPreferences.getInstance();
   }
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
+    final h = MediaQuery.of(context).size.height;
+
+    return WillPopScope(
+      onWillPop: (){
+        return exitApp();
+      },
+      child: SafeArea(
+        child: FutureBuilder<DocumentSnapshot>(
+          future: reference.doc("${widget.id}").get(),
+          builder: (context, snapshot) {
+            if(!snapshot.hasData) {
+              return Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            Map<String, dynamic> data = snapshot.data.data() as Map<String, dynamic>;
+            homePageProvider.totalChance = data['total_chance'];
+            homePageProvider.totalScore = data['total_score'];
+            homePageProvider.fName = data['fname'];
+            homePageProvider.lName = data['lname'];
+
+            return Scaffold(
+              floatingActionButton: FloatingActionButton(
+                child: Icon(Icons.leaderboard, color: Colors.black,),
+                backgroundColor: Color(0xfff4dcd6),
+              ),
+              body: Stack(
+                children: [
+                  Container(
+                    height: h,
+                    width: w,
+                    color: Color(0xffb2d9ea),
+                  ),
+                  ClipPath(
+                    clipper: CustomClipPath(),
+                    child: Container(
+                      height: h,
+                      width: w,
+                      color: Color(0xfff4dcd6),
+                    ),
+                  ),
+                  Container(
+                    width: w,
+                    height: h,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(),
+                            Text("ROLL MASTER", style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),),
+                            PopupMenuButton(
+                                itemBuilder: (BuildContext con) {
+                                  return options.map((String s) {
+                                    return PopupMenuItem<String>(
+                                      value: s,
+                                      child: Text(s),
+                                    );
+                                  }).toList();
+                                },
+                                onSelected: (data) {
+                                  if(data.toString().toLowerCase().contains("log")) {
+                                    FirebaseAuth.instance
+                                        .signOut()
+                                        .then((result) => {
+                                          prefs.clear(),
+                                        Navigator.pushReplacement(context, PageRouteBuilder(
+                                          settings: RouteSettings(name: '/home_page'),
+                                          pageBuilder: (c, a1, a2) => LoginPage(),
+                                          transitionsBuilder: (c, anim, a2, child) =>
+                                              FadeTransition(opacity: anim, child: child),
+                                          transitionDuration: Duration(milliseconds: 500),
+                                        ),)
+                                        })
+                                        .catchError((err) => print(err));
+                                  }
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(Icons.more_vert_outlined, color: Colors.black, size: 24,),
+                                )),
+                          ],
+                        ),
+                        Container(
+                          width: w-32,
+                          child: Consumer<HomePageProvider>(
+                          builder: (BuildContext con, HomePageProvider provider, Widget child) {
+                            return provider.totalChance != 0 ? Column(
+                              children: [
+                               Container(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Total Chances : ${provider.totalChance}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                                      Text("Total Score : ${provider.totalScore}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 36,),
+                                Container(
+                                  width: w-32,
+                                  height: 80,
+                                  child: provider.count == -1 ? Image.asset("assets/diceeLogo.png") :
+                                  Image.asset("assets/${provider.images[provider.count]}"),
+                                ),
+                                SizedBox(height: 36,),
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      provider.getRandomDice();
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Color(0xffb71c1c),
+                                          borderRadius: BorderRadius.circular(6)
+                                      ),
+                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                      child: Text("ROLL A DICE", style: TextStyle(color: Colors.white, fontSize: 18),),
+                                    ),
+                                  ),
+                                ),
+
+                              ],
+                            ) : Center(
+                              child: Column(
+                                children: [
+                                  Container(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Total Chances : ${provider.totalChance}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                                        Text("Total Score : ${provider.totalScore}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 36,),
+                                  Text("You have completed your 10 chances. You can see yourself in leaderboard page competing with others!", style: TextStyle(fontSize: 16,), textAlign: TextAlign.center,),
+                                ],
+                              ),
+                              // child: GestureDetector(
+                              //   onTap: () {
+                              //     provider.refresh();
+                              //   },
+                              //   child: Container(
+                              //     decoration: BoxDecoration(
+                              //         color: Color(0xffb71c1c),
+                              //         borderRadius: BorderRadius.circular(6)
+                              //     ),
+                              //     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              //     child: Text("REFRESH", style: TextStyle(color: Colors.white, fontSize: 18),),
+                              //   ),
+                              // ),
+                            );
+                          }
+
+                          ),
+                        ),
+                        Container()
+                      ],
+                    ),
+                  )
+                ],
+              )
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        print("app in resumed");
+        break;
+      case AppLifecycleState.inactive:
+        print("app in inactive");
+        await updateData();
+        break;
+      case AppLifecycleState.paused:
+        break;
+      case AppLifecycleState.detached:
+        print("app in detached");
+        break;
+    }
+  }
+
+  exitApp() async {
+    await updateData();
+    SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+  }
+
+  updateData() async {
+    var col = reference.doc("${widget.id}").update({
+      "total_chance" : homePageProvider.totalChance,
+      "total_score" : homePageProvider.totalScore,
+    }).catchError((onError) => print("$onError"));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    print("Dispose is called");
+  }
+
+}
+
+class CustomClipPath extends CustomClipper<Path> {
+  var radius=10.0;
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+
+    path.lineTo(0, size.height);
+    path.lineTo(size.width, 0.0);
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+/*
+Scaffold(
       appBar: AppBar(
         leading: Container(),
         centerTitle: true,
         actions: [
           PopupMenuButton(
               itemBuilder: (BuildContext con) {
-                return ["Profile, Logout"].map((String s) {
+                return options.map((String s) {
                   return PopupMenuItem<String>(
                     value: s,
                     child: Text(s),
@@ -85,5 +322,4 @@ class _HomePageUserState extends State<HomePageUser> {
         ],
       ),
     );
-  }
-}
+ */
