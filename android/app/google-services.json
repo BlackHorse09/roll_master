@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "60211049745",
+    "project_id": "roll-master-ae330",
+    "storage_bucket": "roll-master-ae330.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60211049745:android:24bfe709a72ef8728988b0",
+        "android_client_info": {
+          "package_name": "com.sahil.rollmaster.roll_master"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "60211049745-tovu5gvo9c7q38okjpe4k5injgiq7kem.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sahil.rollmaster.roll_master",
+            "certificate_hash": "a74f1bb94d68b47da021656e4aacd5e8c48a412d"
+          }
+        },
+        {
+          "client_id": "60211049745-d32h98g9uvbehlrcitfaeip27jnakb6j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3Dd4bFMwuYDHOiNqg_lT0oN_dHqyK8jc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "60211049745-d32h98g9uvbehlrcitfaeip27jnakb6j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
