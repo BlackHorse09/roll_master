@@ -34,6 +34,8 @@ dependencies:
   shared_preferences:
   animated_text_kit: ^4.2.1
   provider: ^5.0.0
+  font_awesome_flutter: ^9.1.0
+  package_info:
 
 dev_dependencies:
   flutter_test:

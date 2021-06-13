@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:roll_master/Utils/constants.dart';
 
 class HomePageProvider extends ChangeNotifier {
   List<String> images = ["dice1.png", "dice2.png", "dice3.png", "dice4.png", "dice5.png", "dice6.png"];
@@ -11,9 +12,10 @@ class HomePageProvider extends ChangeNotifier {
   String userUID = "";
   String fName = "";
   String lName = "";
+  bool playedOnce = false;
   Random random = new Random();
-  CollectionReference reference = FirebaseFirestore.instance.collection("newUsers");
-  CollectionReference leader = FirebaseFirestore.instance.collection("leaderBoard");
+  CollectionReference reference = FirebaseFirestore.instance.collection("$prod_user_doc");
+  CollectionReference leader = FirebaseFirestore.instance.collection("$prod_leader_doc");
 
 
   getRandomDice() async {
@@ -24,32 +26,41 @@ class HomePageProvider extends ChangeNotifier {
     totalScore = totalScore + count + 1;
     print(totalScore);
     if(totalChance == 0) {
-      await updateScore();
       await addToLeaderBoard();
+      await updateScore();
     }
     notifyListeners();
   }
 
   updateScore() async {
-    var col = reference.doc("$userUID").update({
+    reference.doc("$userUID").update({
       "total_chance" : totalChance,
       "total_score" : totalScore,
+      "played_once" : true,
     }).catchError((onError) => print("$onError"));
   }
 
   addToLeaderBoard() async {
-    leader.add({
+
+    if(!playedOnce) {
+      leader.doc("$userUID").set({
       "fname" : fName,
       "lname" : lName,
       "uid" : userUID,
       "total_score" : totalScore
-    });
+      });
+    } else {
+      leader.doc("$userUID").update({
+        "total_score" : totalScore
+      });
+    }
   }
 
   refresh() {
     totalChance = 10;
     totalScore = 0;
     count = -1;
+    playedOnce = true;
     notifyListeners();
   }
 

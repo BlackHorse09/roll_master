@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _loginFormKey = GlobalKey<FormState>();
   TextEditingController emailInputController;
   TextEditingController pwdInputController;
+  final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   initState() {
@@ -47,6 +48,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        key: scaffoldKey,
         backgroundColor: Color(0xffb2d9ea),
           body: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -89,22 +91,32 @@ class _LoginPageState extends State<LoginPage> {
                         Center(
                           child: GestureDetector(
                             onTap: () async {
+                              closeKeyboard();
                               if (_loginFormKey.currentState.validate()) {
-                                UserCredential result = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailInputController.text, password: pwdInputController.text);
-                                if(result.user != null) {
-                                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                                  prefs.setString("id", result.user.uid);
-                                  Navigator.pushReplacement(context, PageRouteBuilder(
-                                    settings: RouteSettings(name: '/home_page'),
-                                    pageBuilder: (c, a1, a2) => HomePageUser(
-                                      id: result.user.uid,
-                                    ),
-                                    transitionsBuilder: (c, anim, a2, child) =>
-                                        FadeTransition(opacity: anim, child: child),
-                                    transitionDuration: Duration(milliseconds: 500),
-                                  ),);
-                                } else {
-
+                                UserCredential result;
+                                _showLoading(context);
+                                try {
+                                  result = await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailInputController.text, password: pwdInputController.text);
+                                  if(result.user != null) {
+                                    Navigator.pop(context);
+                                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                                    prefs.setString("id", result.user.uid);
+                                    Navigator.pushReplacement(context, PageRouteBuilder(
+                                      settings: RouteSettings(name: '/home_page'),
+                                      pageBuilder: (c, a1, a2) => HomePageUser(
+                                        id: result.user.uid,
+                                      ),
+                                      transitionsBuilder: (c, anim, a2, child) =>
+                                          FadeTransition(opacity: anim, child: child),
+                                      transitionDuration: Duration(milliseconds: 500),
+                                    ),);
+                                  } else {
+                                    Navigator.pop(context);
+                                    showCustomSnackBar("Something went wrong");
+                                  }
+                                } on FirebaseAuthException catch (error) {
+                                  Navigator.pop(context);
+                                  showCustomSnackBar(error.message);
                                 }
                               }
                             },
@@ -139,4 +151,40 @@ class _LoginPageState extends State<LoginPage> {
                   )))),
     );
   }
+
+  void _showLoading(BuildContext context) {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            //contentPadding: const EdgeInsets.only(left : 16, right: 0, top: 10, bottom: 10),
+            content: Container(
+              width: 200,
+              child: Row(
+                children: <Widget>[
+                  CircularProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                  ),
+                  Text('Loading...'),
+                ],
+              ),
+            ),
+          );
+        }); //end showDialog()
+  }
+
+  closeKeyboard() {
+    FocusScopeNode currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+      FocusManager.instance.primaryFocus.unfocus();
+    }
+  }
+
+  showCustomSnackBar(String message) {
+    final snackBar = SnackBar(content: Text("$message"));
+    scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
 }

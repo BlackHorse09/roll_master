@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:roll_master/HomePage/HomePageUser.dart';
+import 'package:roll_master/Utils/constants.dart';
 
 class LeaderBoard extends StatefulWidget {
   var id;
@@ -15,7 +17,7 @@ class _LeaderBoardState extends State<LeaderBoard> {
   double h,w;
   @override
   void initState() {
-    collectionReference = FirebaseFirestore.instance.collection("leaderBoard");
+    collectionReference = FirebaseFirestore.instance.collection("$prod_leader_doc");
     super.initState();
   }
 
@@ -54,21 +56,29 @@ class _LeaderBoardState extends State<LeaderBoard> {
                       Center(
                         child: Text("LEADER BOARD", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),),
                       ),
+                      SizedBox(height: 16,),
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Color(0xff964b00),
+                        child: Center(child: Icon(FontAwesomeIcons.medal, size: 36, color: Color(0xffffd700),)),
+                      ),
                       Column(
                         children: data.map((e) {
+                          int index = data.indexOf(e);
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Column(
                               children: [
                                 SizedBox(height: 16,),
                                 Card(
+                                  color: index == 0 ? Color(0xff964b00) : Colors.white,
                                   child: Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text("${e['fname']} ${e['lname']}", style: TextStyle(fontSize: 16),),
-                                        Text("${e['total_score']}", style: TextStyle(fontSize: 16),)
+                                        Text("${e['fname']} ${e['lname']}", style: TextStyle(fontSize: 16, color: index == 0 ? Color(0xffffd700) : Colors.black,),),
+                                        Text("${e['total_score']}", style: TextStyle(fontSize: 16, color: index == 0 ? Color(0xffffd700) : Colors.black,),),
                                       ],
                                     ),
                                   ),

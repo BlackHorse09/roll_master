@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info/package_info.dart';
 import 'package:provider/provider.dart';
 import 'package:roll_master/HomePage/Provider/home_page_provider.dart';
 import 'package:roll_master/LeaderBoard/leader_board.dart';
 import 'package:roll_master/Login/login_user.dart';
+import 'package:roll_master/Utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePageUser extends StatefulWidget {
@@ -19,11 +21,13 @@ class HomePageUser extends StatefulWidget {
 
 class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver {
 
-  CollectionReference reference = FirebaseFirestore.instance.collection("newUsers");
+  CollectionReference reference = FirebaseFirestore.instance.collection("$prod_user_doc");
 
   List<String> options = ["Profile", "Logout"];
   SharedPreferences prefs;
   HomePageProvider homePageProvider;
+  PackageInfo packageInfo;
+  String version = "";
 
   @override
   void initState() {
@@ -35,6 +39,9 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
 
   initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
+    packageInfo = await PackageInfo.fromPlatform();
+    version = packageInfo.version + " (${packageInfo.buildNumber})";
+    setState(() {});
   }
 
   @override
@@ -63,6 +70,7 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
             homePageProvider.fName = data['fname'];
             homePageProvider.lName = data['lname'];
             homePageProvider.userUID = data['uid'];
+            homePageProvider.playedOnce = data['played_once'];
 
             return Scaffold(
               floatingActionButton: FloatingActionButton(
@@ -147,35 +155,35 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
                                                 SizedBox(height: 4,),
                                                 Text("${data['email']}", style: TextStyle(color: Colors.black, fontSize: 16),),
                                                 SizedBox(height: 4,),
-                                                Divider(color: Colors.black,),
+                                                Divider(color: Colors.black26,),
                                                 SizedBox(height: 4,),
 
                                                 Text("First Name :", style: TextStyle(color: Colors.black, fontSize: 16),),
                                                 SizedBox(height: 4,),
                                                 Text("${data['fname']}", style: TextStyle(color: Colors.black, fontSize: 16),),
                                                 SizedBox(height: 4,),
-                                                Divider(color: Colors.black,),
+                                                Divider(color: Colors.black26,),
                                                 SizedBox(height: 4,),
 
                                                 Text("Last Name :", style: TextStyle(color: Colors.black, fontSize: 16),),
                                                 SizedBox(height: 4,),
                                                 Text("${data['lname']}", style: TextStyle(color: Colors.black, fontSize: 16),),
                                                 SizedBox(height: 4,),
-                                                Divider(color: Colors.black,),
+                                                Divider(color: Colors.black26,),
                                                 SizedBox(height: 4,),
 
-                                                Text("Total Score :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                Text("Total Score :", style: TextStyle(color: Colors.black, fontSize: 18),),
                                                 SizedBox(height: 4,),
-                                                Text("${homePageProvider.totalScore}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                Text("${homePageProvider.totalScore}", style: TextStyle(color: Colors.black, fontSize: 18),),
                                                 SizedBox(height: 4,),
-                                                Divider(color: Colors.black,),
+                                                Divider(color: Colors.black26,),
                                                 SizedBox(height: 4,),
 
-                                                Text("Total Chances Left :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                Text("Total Chances Left :", style: TextStyle(color: Colors.black, fontSize: 18),),
                                                 SizedBox(height: 4,),
-                                                Text("${homePageProvider.totalChance}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                Text("${homePageProvider.totalChance}", style: TextStyle(color: Colors.black, fontSize: 18),),
                                                 SizedBox(height: 4,),
-                                                Divider(color: Colors.black,),
+                                                Divider(color: Colors.black26,),
                                                 SizedBox(height: 4,),
                                               ],
                                             ),
@@ -194,6 +202,7 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
                           builder: (BuildContext con, HomePageProvider provider, Widget child) {
                             return provider.totalChance != 0 ? Column(
                               children: [
+
                                Container(
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -240,8 +249,31 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
                                       ],
                                     ),
                                   ),
-                                  SizedBox(height: 36,),
+                                  SizedBox(height: 16,),
+                                  Container(
+                                    width: w-32,
+                                    height: 80,
+                                    child: provider.count == -1 ? Image.asset("assets/diceeLogo.png") :
+                                    Image.asset("assets/${provider.images[provider.count]}"),
+                                  ),
+                                  SizedBox(height: 16,),
                                   Text("You have completed your 10 chances. You can see yourself in leaderboard page competing with others!", style: TextStyle(fontSize: 16,), textAlign: TextAlign.center,),
+                                  SizedBox(height: 16,),
+                                  GestureDetector(
+                                    onTap: () {
+                                      provider.refresh();
+                                    },
+                                    child: Center(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: Color(0xffb71c1c),
+                                            borderRadius: BorderRadius.circular(6)
+                                        ),
+                                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                        child: Text("REFRESH", style: TextStyle(color: Colors.white, fontSize: 18),),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                               // child: GestureDetector(
@@ -262,7 +294,11 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
 
                           ),
                         ),
-                        Container()
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Text("Version : $version", style: TextStyle(color: Colors.black, fontSize: 12), textAlign: TextAlign.left,),
+                        )
                       ],
                     ),
                   )
