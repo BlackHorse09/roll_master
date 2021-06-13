@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   navigationScreen() {
-    Future.delayed(Duration(milliseconds: 2200), () async {
+    Future.delayed(Duration(milliseconds: 2000), () async {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
         if(prefs.getString("id") != null) {
@@ -59,30 +59,58 @@ class _SplashScreenState extends State<SplashScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("WELCOME TO", style: TextStyle(color: Colors.black, fontSize: 24),),
-              SizedBox(height: 8,),
-          DefaultTextStyle(
-            style: const TextStyle(
-              fontSize: 28,
-              color: Colors.black
+        body: Stack(
+          children: [
+            Container(
+              height: h,
+              width: w,
+              color: Color(0xffb2d9ea),
             ),
-            child: AnimatedTextKit(
-                isRepeatingAnimation: true,
-                totalRepeatCount: 2,
-                animatedTexts: [
-                  TyperAnimatedText('ROLL MASTER'),
+            Container(
+              height: h * 0.7,
+              width: w,
+              decoration: BoxDecoration(
+                color: Color(0xfff4dcd6),
+                borderRadius: BorderRadius.only(
+                  bottomRight: Radius.circular(56),
+                  bottomLeft: Radius.circular(56),
+                ),
+              ),
+            ),
+            Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: h*0.3,),
+                  Center(child: Container(
+                      height: 80,
+                      child: Image.asset("assets/diceeLogo.png"))),
+                  SizedBox(height: 16,),
+                  Text("WELCOME TO", style: TextStyle(color: Colors.black, fontSize: 24),),
+                  SizedBox(height: 8,),
+                  DefaultTextStyle(
+                    style: const TextStyle(
+                        fontSize: 28,
+                        color: Colors.black
+                    ),
+                    child: AnimatedTextKit(
+                      isRepeatingAnimation: true,
+                      totalRepeatCount: 2,
+                      animatedTexts: [
+                        TyperAnimatedText('ROLL MASTER'),
+                      ],
+                    ),
+                  ),
                 ],
-          ),
-        ),
-            ],
-          ),
-        ),
+              ),
+            ),
+          ],
+        )
       ),
     );
   }
 }
+/*
+
+ */

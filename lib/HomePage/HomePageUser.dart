@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:roll_master/HomePage/Provider/home_page_provider.dart';
+import 'package:roll_master/LeaderBoard/leader_board.dart';
 import 'package:roll_master/Login/login_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -61,11 +62,23 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
             homePageProvider.totalScore = data['total_score'];
             homePageProvider.fName = data['fname'];
             homePageProvider.lName = data['lname'];
+            homePageProvider.userUID = data['uid'];
 
             return Scaffold(
               floatingActionButton: FloatingActionButton(
                 child: Icon(Icons.leaderboard, color: Colors.black,),
                 backgroundColor: Color(0xfff4dcd6),
+                onPressed: () {
+                  Navigator.push(context, PageRouteBuilder(
+                    settings: RouteSettings(name: '/leader_board'),
+                    pageBuilder: (c, a1, a2) => LeaderBoard(
+                      id: widget.id,
+                    ),
+                    transitionsBuilder: (c, anim, a2, child) =>
+                        FadeTransition(opacity: anim, child: child),
+                    transitionDuration: Duration(milliseconds: 500),
+                  ),);
+                },
               ),
               body: Stack(
                 children: [
@@ -85,47 +98,95 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
                   Container(
                     width: w,
                     height: h,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(),
-                            Text("ROLL MASTER", style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),),
-                            PopupMenuButton(
-                                itemBuilder: (BuildContext con) {
-                                  return options.map((String s) {
-                                    return PopupMenuItem<String>(
-                                      value: s,
-                                      child: Text(s),
-                                    );
-                                  }).toList();
-                                },
-                                onSelected: (data) {
-                                  if(data.toString().toLowerCase().contains("log")) {
-                                    FirebaseAuth.instance
-                                        .signOut()
-                                        .then((result) => {
-                                          prefs.clear(),
-                                        Navigator.pushReplacement(context, PageRouteBuilder(
-                                          settings: RouteSettings(name: '/home_page'),
-                                          pageBuilder: (c, a1, a2) => LoginPage(),
-                                          transitionsBuilder: (c, anim, a2, child) =>
-                                              FadeTransition(opacity: anim, child: child),
-                                          transitionDuration: Duration(milliseconds: 500),
-                                        ),)
-                                        })
-                                        .catchError((err) => print(err));
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Icon(Icons.more_vert_outlined, color: Colors.black, size: 24,),
-                                )),
-                          ],
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("ROLL MASTER", style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),),
+                              PopupMenuButton(
+                                  itemBuilder: (BuildContext con) {
+                                    return options.map((String s) {
+                                      return PopupMenuItem<String>(
+                                        value: s,
+                                        child: Text(s),
+                                      );
+                                    }).toList();
+                                  },
+                                  onSelected: (popData) {
+                                    if(popData.toString().toLowerCase().contains("log")) {
+                                      FirebaseAuth.instance
+                                          .signOut()
+                                          .then((result) => {
+                                            prefs.clear(),
+                                          Navigator.pushReplacement(context, PageRouteBuilder(
+                                            settings: RouteSettings(name: '/login_page'),
+                                            pageBuilder: (c, a1, a2) => LoginPage(),
+                                            transitionsBuilder: (c, anim, a2, child) =>
+                                                FadeTransition(opacity: anim, child: child),
+                                            transitionDuration: Duration(milliseconds: 500),
+                                          ),)
+                                          })
+                                          .catchError((err) => print(err));
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext con) {
+                                          return AlertDialog(
+                                            title: Center(child: Text("User Details", style: TextStyle(color: Colors.black),)),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text("Email :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Text("${data['email']}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Divider(color: Colors.black,),
+                                                SizedBox(height: 4,),
+
+                                                Text("First Name :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Text("${data['fname']}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Divider(color: Colors.black,),
+                                                SizedBox(height: 4,),
+
+                                                Text("Last Name :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Text("${data['lname']}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Divider(color: Colors.black,),
+                                                SizedBox(height: 4,),
+
+                                                Text("Total Score :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Text("${homePageProvider.totalScore}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Divider(color: Colors.black,),
+                                                SizedBox(height: 4,),
+
+                                                Text("Total Chances Left :", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Text("${homePageProvider.totalChance}", style: TextStyle(color: Colors.black, fontSize: 16),),
+                                                SizedBox(height: 4,),
+                                                Divider(color: Colors.black,),
+                                                SizedBox(height: 4,),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      );
+                                    }
+                                  },
+                                  child: Icon(Icons.more_vert_outlined, color: Colors.black, size: 24,)),
+                            ],
+                          ),
                         ),
                         Container(
                           width: w-32,
@@ -238,10 +299,15 @@ class _HomePageUserState extends State<HomePageUser> with WidgetsBindingObserver
   }
 
   updateData() async {
-    var col = reference.doc("${widget.id}").update({
-      "total_chance" : homePageProvider.totalChance,
-      "total_score" : homePageProvider.totalScore,
-    }).catchError((onError) => print("$onError"));
+    if(homePageProvider.totalChance != 0) {
+      print("Update happened");
+      var col = reference.doc("${widget.id}").update({
+        "total_chance" : homePageProvider.totalChance,
+        "total_score" : homePageProvider.totalScore,
+      }).catchError((onError) => print("$onError"));
+    } else {
+      print("Update not happened");
+    }
   }
 
   @override

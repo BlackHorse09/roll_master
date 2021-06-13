@@ -128,6 +128,7 @@ class _RegisterUserState extends State<RegisterUser> {
                     Center(
                       child: GestureDetector(
                         onTap: () {
+                          closeKeyboard();
                           if (_registerFormKey.currentState.validate()) {
                             FirebaseAuth.instance
                                 .createUserWithEmailAndPassword(
@@ -142,11 +143,8 @@ class _RegisterUserState extends State<RegisterUser> {
                               "lname": lastNameInputController.text,
                               "email": emailInputController.text,
                               "password": pwdInputController.text,
-                              "img": "",
                               "total_chance": 10,
-                              "played": 0,
                               "total_score": 0,
-                              "history": ""
                             })
                                 .then((result) => {
                               firstNameInputController.clear(),
@@ -196,4 +194,12 @@ class _RegisterUserState extends State<RegisterUser> {
               )))),
     );
   }
+
+  closeKeyboard() {
+    FocusScopeNode currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+      FocusManager.instance.primaryFocus.unfocus();
+    }
+  }
+
 }
